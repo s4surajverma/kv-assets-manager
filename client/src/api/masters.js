@@ -1,0 +1,16 @@
+import api from './axios';
+export const getFundingHeads = () => api.get('/masters/funding-heads');
+export const getAssetHeads = () => api.get('/masters/asset-heads');
+export const getDepartments = () => api.get('/masters/departments');
+export const createDepartment = (data) => api.post('/masters/departments', data);
+export const updateDepartment = (id, data) => api.put(`/masters/departments/${id}`, data);
+export const getCategories = () => api.get('/masters/asset-categories');
+export const updateCategory = (id, data) => api.put(`/masters/asset-categories/${id}`, data);
+export const getLocations = (params) => api.get('/masters/locations', { params });
+export const getSuppliers = () => api.get('/masters/suppliers');
+export const getDepreciationRules = (params) => api.get('/masters/depreciation-rules', { params });
+export const getFinancialYears = (params) => api.get('/financial-years', { params });
+export const createFinancialYear = (data) => api.post('/financial-years', data);
+export const closeFinancialYear = (code, data) => api.post(`/financial-years/${code}/close`, data);
+export const reopenFinancialYear = (code, data) => api.post(`/financial-years/${code}/reopen`, data);
+export const getDashboard = () => api.get('/reports/dashboard');

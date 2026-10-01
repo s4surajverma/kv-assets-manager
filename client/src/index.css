@@ -1,0 +1,998 @@
+@import "tailwindcss";
+
+/* ── Global Paged Media Layout for Registers ── */
+@page {
+  size: landscape;
+  margin: 6mm 8mm;
+}
+
+/* Modern Typography & Base Styling */
+body {
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  @apply bg-slate-50 text-slate-800 text-sm antialiased selection:bg-indigo-500 selection:text-white;
+}
+
+/* Custom Smooth Animations & Keyframes */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.15); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-slide-right {
+  animation: slideInRight 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 2.5s infinite ease-in-out;
+}
+
+/* Glassmorphism & Elevated Card Utilities */
+.glass-surface {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(226, 232, 240, 0.85);
+}
+
+.dark-glass {
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.card-interactive {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.card-interactive:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px -6px rgba(15, 23, 42, 0.08), 0 4px 8px -2px rgba(15, 23, 42, 0.04);
+}
+
+/* Custom Sleek Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Print-friendly */
+@media print {
+  @page {
+    size: landscape;
+    margin: 10mm;
+  }
+
+  .no-print { display: none !important; }
+
+  /* Modern approach: Hide everything that is NOT the print area, inside it, or a parent of it */
+  body *:not(:has(.print-area)):not(.print-area):not(.print-area *) {
+    display: none !important;
+  }
+
+  /* Strip spacing from parent elements so the print area sits flush at the top */
+  body *:has(.print-area) {
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
+    height: auto !important;
+    min-height: 0 !important;
+    position: static !important;
+  }
+
+  /* Reset visibility and allow normal pagination */
+  .print-area,
+  .print-area * {
+    visibility: visible !important;
+  }
+
+  .print-area {
+    position: static !important;
+    width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: white !important;
+    box-shadow: none !important;
+    z-index: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Prevent scrollbars from appearing in print and allow tables to expand */
+  .overflow-x-auto, .overflow-y-auto, .overflow-hidden, .overflow-auto {
+    overflow: visible !important;
+    max-height: none !important;
+  }
+}
+
+/* Form register styling */
+.form-section {
+  @apply border border-gray-300 rounded p-4 mb-4 bg-white;
+}
+.form-section-title {
+  @apply text-xs font-semibold uppercase text-gray-500 mb-3 tracking-wide;
+}
+.register-table th {
+  @apply bg-gray-100 text-xs font-semibold text-gray-600 uppercase tracking-wide px-3 py-2 text-left border-b border-gray-300;
+}
+.register-table td {
+  @apply px-3 py-2 text-sm border-b border-gray-200;
+}
+.register-table tr:hover {
+  @apply bg-gray-50;
+}
+
+/* ── True Physical Register Folio (CS-24, CS-24A, GFR-22) ── */
+.register-folio,
+.register-block {
+  background: #ffffff;
+  color: #000000;
+  box-sizing: border-box;
+  margin: 0 auto 2.5rem auto;
+  position: relative;
+  page-break-after: always;
+  break-after: page;
+  page-break-inside: avoid;
+  break-inside: avoid;
+  font-family: 'Calibri', 'Inter', 'Noto Sans Devanagari', 'Nirmala UI', 'Arial', sans-serif;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.08), 0 2px 6px -1px rgba(0, 0, 0, 0.04);
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  padding: 18px 24px;
+  max-width: 100%;
+}
+
+.register-folio-header,
+.register-header {
+  border-bottom: 2px solid #000000;
+  padding-bottom: 8px;
+  margin-bottom: 10px;
+  text-align: center;
+  background: #ffffff;
+}
+
+/* Ensure Hindi / Devanagari headings have uniform font, baseline & uncropped matras */
+.register-folio-header,
+.register-header,
+.schedule4-header {
+  padding-top: 4px;
+}
+
+.register-folio-header h1,
+.register-header h1,
+.schedule4-header h1,
+.register-heading-hindi,
+.font-hindi {
+  font-family: 'Noto Sans Devanagari', 'Nirmala UI', 'Segoe UI', -apple-system, sans-serif !important;
+  font-feature-settings: "kern" 1;
+  font-variant-numeric: normal !important;
+  vertical-align: baseline !important;
+  line-height: 1.45 !important;
+  padding-top: 4px !important;
+  margin-top: 0 !important;
+  margin-bottom: 2px !important;
+  overflow: visible !important;
+}
+
+.register-badge-box {
+  border: 1.5px solid #000000;
+  padding: 2px 8px;
+  font-family: monospace;
+  font-weight: 800;
+  font-size: 11px;
+  background-color: #ffffff;
+  color: #000000;
+  letter-spacing: 0.05em;
+  display: inline-block;
+}
+
+.register-view-table {
+  width: 100%;
+  border-collapse: collapse !important;
+  border: 1.5px solid #000000 !important;
+  font-size: 8.5pt;
+  table-layout: auto;
+}
+
+.register-view-table th {
+  border: 1px solid #000000 !important;
+  padding: 4px 3px !important;
+  text-align: center !important;
+  font-weight: 700 !important;
+  font-size: 7.5pt !important;
+  line-height: 1.2 !important;
+  background-color: #f8fafc;
+  color: #000000 !important;
+}
+
+.register-view-table td {
+  border: 1px solid #000000 !important;
+  padding: 4px 4px !important;
+  font-size: 8pt !important;
+  line-height: 1.25 !important;
+  color: #000000 !important;
+}
+
+.register-view-table tr.col-numbers th {
+  background-color: #f1f5f9 !important;
+  font-size: 7pt !important;
+  font-weight: 600 !important;
+  padding: 2px !important;
+  color: #000000 !important;
+  border: 1px solid #000000 !important;
+}
+
+.register-view-table tr.empty-ledger-row td {
+  height: 24px !important;
+  padding: 0 !important;
+}
+
+.register-view-table tr.wo-row {
+  background-color: #fef2f2;
+}
+
+.register-view-table tr.issue-row {
+  background-color: #fffbeb;
+}
+
+.register-view-table .col-num {
+  width: 32px;
+}
+
+.register-signature-block {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-top: 16px;
+  padding-top: 10px;
+  font-size: 8.5pt;
+  color: #000000;
+}
+
+.register-sig-item {
+  text-align: center;
+  min-width: 170px;
+}
+
+.register-sig-line {
+  border-top: 1px dotted #000000;
+  margin-bottom: 4px;
+  height: 1px;
+}
+
+/* Print styles for register view */
+@media print {
+  /* 1. Global Reset & Layout Flattening: Dissolve flex & height constraints */
+  html,
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    font-size: 10pt;
+  }
+
+  #root,
+  #root > div,
+  #root > div > div,
+  main,
+  .print-area {
+    display: block !important;
+    height: auto !important;
+    min-height: 0 !important;
+    width: 100% !important;
+    overflow: visible !important;
+    position: static !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    float: none !important;
+  }
+
+  /* 2. Critical: Dissolve horizontal overflow scroll containers in print */
+  .overflow-x-auto,
+  .overflow-y-auto,
+  .overflow-auto,
+  .overflow-hidden {
+    overflow: visible !important;
+    display: block !important;
+    width: 100% !important;
+  }
+
+  /* 3. Hide all non-printable elements */
+  .no-print,
+  nav,
+  aside,
+  header.no-print,
+  button.no-print {
+    display: none !important;
+  }
+
+  /* 4. Complete Folio Isolation: 1 Physical Page per Folio */
+  .register-folio,
+  .register-block,
+  .cs49-folio,
+  .cs49-sheet,
+  .cs49-proforma,
+  .verification-folio {
+    display: block !important;
+    width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 0 4mm 0 !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-sizing: border-box !important;
+    break-before: page !important;
+    page-break-before: always !important;
+    break-after: auto !important;
+    page-break-after: auto !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .register-folio:first-of-type,
+  .register-folio:first-child,
+  .register-block:first-of-type,
+  .register-block:first-child,
+  .cs49-folio:first-of-type,
+  .cs49-folio:first-child,
+  .cs49-sheet:first-of-type,
+  .cs49-sheet:first-child,
+  .cs49-proforma:first-of-type,
+  .cs49-proforma:first-child,
+  .verification-folio:first-of-type,
+  .verification-folio:first-child {
+    break-before: auto !important;
+    page-break-before: auto !important;
+  }
+
+  /* 5. Header Protection: Never split or orphan the heading */
+  .register-folio-header,
+  .register-header,
+  .cs49-header,
+  .schedule4-header,
+  .verification-header {
+    display: block !important;
+    width: 100% !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    break-after: avoid !important;
+    page-break-after: avoid !important;
+    break-before: avoid !important;
+    page-break-before: avoid !important;
+    border-bottom: 2px solid #000000 !important;
+    background: transparent !important;
+    padding-bottom: 4px !important;
+    margin-bottom: 6px !important;
+  }
+
+  .register-folio-header *,
+  .register-header *,
+  .cs49-header *,
+  .schedule4-header *,
+  .verification-header * {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* 6. Ledger Table Printing Rules */
+  .register-view-table {
+    border: 1.5px solid #000000 !important;
+    border-collapse: collapse !important;
+    font-size: 7.5pt !important;
+    width: 100% !important;
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+  }
+
+  .register-view-table thead {
+    display: table-header-group !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    break-after: avoid !important;
+    page-break-after: avoid !important;
+  }
+
+  .register-view-table tr {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .register-view-table th,
+  .register-view-table td {
+    border: 1px solid #000000 !important;
+    color: #000000 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .register-view-table th {
+    background-color: #f8fafc !important;
+    font-size: 6.8pt !important;
+    padding: 2px 2px !important;
+    line-height: 1.15 !important;
+  }
+
+  .register-view-table tr.col-numbers th {
+    background-color: #f1f5f9 !important;
+    font-size: 6.2pt !important;
+    padding: 1px !important;
+  }
+
+  .register-view-table tbody td {
+    padding: 2px 3px !important;
+    font-size: 7.2pt !important;
+    line-height: 1.2 !important;
+  }
+
+  .register-view-table tr.empty-ledger-row td {
+    height: 18px !important;
+  }
+
+  .register-view-table tr.wo-row,
+  .register-view-table tr.issue-row {
+    background-color: transparent !important;
+  }
+
+  /* 7. Signature & Attestation Block Protection */
+  .register-signature-block {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: flex-end !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    break-before: avoid !important;
+    page-break-before: avoid !important;
+    margin-top: 10px !important;
+    padding-top: 6px !important;
+    font-size: 7.2pt !important;
+  }
+
+  .register-sig-line {
+    border-top: 1px dotted #000000 !important;
+  }
+}
+
+/* ── Schedule 4 — Official KVS Financial Statement ── */
+.schedule4-container,
+.schedule4-folio {
+  background: #ffffff;
+  color: #000000;
+  box-sizing: border-box;
+  margin: 0 auto 2.5rem auto;
+  position: relative;
+  page-break-after: auto;
+  page-break-inside: avoid;
+  break-inside: avoid;
+  font-family: 'Times New Roman', 'Georgia', 'Noto Sans Devanagari', 'Calibri', serif;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.08), 0 2px 6px -1px rgba(0, 0, 0, 0.04);
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  padding: 18px 24px;
+  max-width: 100%;
+}
+
+.schedule4-header {
+  border-bottom: 2px solid #000000;
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+  text-align: center;
+  background: #ffffff;
+}
+
+.schedule4-table {
+  width: 100%;
+  border-collapse: collapse !important;
+  border: 1.5px solid #000000 !important;
+  font-size: 8pt;
+  table-layout: auto;
+  margin-bottom: 12px;
+}
+
+.schedule4-table th,
+.s4-h {
+  border: 1px solid #000000 !important;
+  padding: 3.5px 3px !important;
+  text-align: center !important;
+  font-weight: 700 !important;
+  font-size: 7.5pt !important;
+  line-height: 1.15 !important;
+  background-color: #f8fafc;
+  color: #000000 !important;
+}
+
+.schedule4-table td,
+.s4-c {
+  border: 1px solid #000000 !important;
+  padding: 3px 4px !important;
+  font-size: 8pt !important;
+  line-height: 1.2 !important;
+  color: #000000 !important;
+  white-space: nowrap;
+}
+
+.schedule4-table tr.col-numbers td,
+.schedule4-table tr.col-numbers th {
+  background-color: #f1f5f9 !important;
+  font-size: 7pt !important;
+  font-weight: 600 !important;
+  padding: 1.5px !important;
+  text-align: center !important;
+  color: #000000 !important;
+  border: 1px solid #000000 !important;
+}
+
+@media print {
+  .schedule4-container,
+  .schedule4-folio {
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    padding: 3mm 0 0 0 !important;
+    width: 100% !important;
+    background: #ffffff !important;
+    break-before: avoid !important;
+    page-break-before: avoid !important;
+    break-after: avoid !important;
+    page-break-after: avoid !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+  .register-folio-header,
+  .schedule4-header {
+    border-bottom: 1.5px solid #000000 !important;
+    background: transparent !important;
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+    margin-bottom: 3px !important;
+    width: 100% !important;
+    overflow: visible !important;
+  }
+  .register-folio-header .flex,
+  .schedule4-header .flex {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: flex-start !important;
+    width: 100% !important;
+    overflow: visible !important;
+  }
+  .register-folio-header h1,
+  .schedule4-header h1 {
+    font-family: 'Noto Sans Devanagari', 'Nirmala UI', system-ui, -apple-system, sans-serif !important;
+    font-size: 11pt !important;
+    line-height: 1.45 !important;
+    padding-top: 3px !important;
+    margin: 0 0 1px 0 !important;
+    font-feature-settings: "kern" 1;
+    font-variant-numeric: normal !important;
+    vertical-align: baseline !important;
+    overflow: visible !important;
+  }
+  .schedule4-header h2 {
+    font-size: 8.5pt !important;
+    line-height: 1.15 !important;
+    margin: 0 !important;
+  }
+  .schedule4-header p {
+    font-size: 7.5pt !important;
+    margin-top: 1px !important;
+    margin-bottom: 0 !important;
+  }
+  .schedule4-table {
+    border: 1px solid #000000 !important;
+    border-collapse: collapse !important;
+    font-size: 6pt !important;
+    width: 100% !important;
+    margin-bottom: 2px !important;
+    line-height: 1.05 !important;
+  }
+  .schedule4-table th,
+  .s4-h {
+    border: 1px solid #000000 !important;
+    font-size: 5.2pt !important;
+    padding: 0.8px 1.5px !important;
+    background-color: #f8fafc !important;
+    color: #000000 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    line-height: 1.02 !important;
+  }
+  .schedule4-table td,
+  .s4-c {
+    border: 1px solid #000000 !important;
+    font-size: 5.8pt !important;
+    padding: 0.4px 2px !important;
+    color: #000000 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    line-height: 1.05 !important;
+  }
+  .schedule4-table tr.col-numbers td,
+  .schedule4-table tr.col-numbers th {
+    font-size: 4.8pt !important;
+    padding: 0.3px !important;
+    line-height: 1 !important;
+  }
+}
+
+/* ── CS-49 Condemnation Proforma ── */
+.cs49-proforma,
+.cs49-sheet {
+  background: #ffffff;
+  color: #000000;
+  box-sizing: border-box;
+  margin: 0 auto 2.5rem auto;
+  position: relative;
+  page-break-after: auto;
+  page-break-inside: avoid;
+  break-inside: avoid;
+  font-family: 'Times New Roman', 'Georgia', 'Noto Sans Devanagari', 'Calibri', serif;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.08), 0 2px 6px -1px rgba(0, 0, 0, 0.04);
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  padding: 20px 24px;
+  max-width: 100%;
+}
+
+.cs49-header {
+  border-bottom: 2px solid #000000;
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+  text-align: center;
+  background: #ffffff;
+}
+
+.cs49-form-label {
+  @apply text-xs font-bold text-gray-500 uppercase tracking-widest mb-1 text-right;
+}
+
+.cs49-kv-name {
+  @apply text-sm font-bold text-gray-800 uppercase tracking-wide;
+}
+
+.cs49-subtitle {
+  @apply text-xs text-gray-700 mt-1 leading-relaxed;
+}
+
+/* CS-49 Table */
+.cs49-table {
+  width: 100%;
+  border-collapse: collapse !important;
+  border: 1.5px solid #000000 !important;
+  font-size: 8.5pt;
+  table-layout: auto;
+}
+
+.cs49-table thead th {
+  border: 1px solid #000000 !important;
+  padding: 4px 3px !important;
+  text-align: center !important;
+  font-weight: 700 !important;
+  font-size: 7.5pt !important;
+  line-height: 1.2 !important;
+  background-color: #f8fafc;
+  color: #000000 !important;
+}
+
+.cs49-table thead tr.cs49-col-nums th {
+  background-color: #f1f5f9 !important;
+  font-size: 7pt !important;
+  font-weight: 600 !important;
+  padding: 2px !important;
+  color: #000000 !important;
+  border: 1px solid #000000 !important;
+}
+
+.cs49-table tbody td {
+  border: 1px solid #000000 !important;
+  padding: 4px 5px !important;
+  font-size: 8pt !important;
+  line-height: 1.25 !important;
+  color: #000000 !important;
+  vertical-align: top;
+}
+
+.cs49-table tr.empty-ledger-row td {
+  height: 22px !important;
+  padding: 0 !important;
+}
+
+.cs49-total-row td {
+  border-top: 1.5px solid #000000 !important;
+  border-bottom: 1.5px solid #000000 !important;
+  background-color: #f8fafc;
+  font-weight: 700;
+  padding: 4px 5px !important;
+}
+
+.cs49-sub {
+  font-size: 7.5pt;
+  color: #4b5563;
+}
+
+/* Depreciation Summary */
+.cs49-depr-summary {
+  margin-top: 10px;
+  border: 1px solid #000000;
+  padding: 6px 12px;
+  background: #ffffff;
+}
+
+.cs49-depr-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.cs49-depr-label {
+  font-size: 8pt;
+  color: #374151;
+  padding: 2px 4px;
+  width: 32%;
+}
+
+.cs49-depr-value {
+  font-size: 8.5pt;
+  font-weight: 700;
+  color: #000000;
+  padding: 2px 4px;
+  width: 18%;
+}
+
+.cs49-method-note {
+  margin-top: 6px;
+  padding-top: 4px;
+  border-top: 1px dotted #9ca3af;
+  font-size: 7.5pt;
+  color: #4b5563;
+  line-height: 1.3;
+  font-style: italic;
+}
+
+/* Certificate */
+.cs49-certificate {
+  margin-top: 12px;
+  border-top: 1.5px solid #000000;
+  padding-top: 8px;
+}
+
+.cs49-cert-title {
+  font-size: 9.5pt;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 6px;
+  color: #000000;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.cs49-cert-list {
+  space-y: 6px;
+  font-size: 7.5pt;
+  color: #111827;
+  line-height: 1.35;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.cs49-cert-list li {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin-bottom: 5px;
+}
+
+.cs49-cert-check {
+  font-size: 9pt;
+  font-weight: 700;
+  color: #15803d;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+/* Signatures */
+.cs49-signatures {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-top: 16px;
+  padding-top: 8px;
+  font-size: 8pt;
+  color: #000000;
+}
+
+.cs49-sig-block {
+  font-size: 8pt;
+  color: #000000;
+}
+
+.cs49-sig-label {
+  font-weight: 700;
+  color: #000000;
+  margin-bottom: 2px;
+  font-size: 8pt;
+}
+
+.cs49-sig-name {
+  font-size: 8.5pt;
+  font-weight: 700;
+  color: #000000;
+}
+
+.cs49-sig-empcode {
+  font-size: 7.5pt;
+  color: #6b7280;
+}
+
+.cs49-board-date {
+  font-size: 8pt;
+  color: #374151;
+  margin-top: 8px;
+}
+
+.cs49-extra-section {
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 12px;
+  margin-top: 12px;
+  background: #ffffff;
+}
+
+/* CS-49 Print Styles */
+@media print {
+  .cs49-proforma,
+  .cs49-sheet {
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    background: #ffffff !important;
+    page-break-after: auto !important;
+  }
+
+  .cs49-header {
+    border-bottom: 2px solid #000000 !important;
+    background: transparent !important;
+    padding-bottom: 6px !important;
+    margin-bottom: 8px !important;
+  }
+
+  .cs49-table {
+    border: 1.5px solid #000000 !important;
+    border-collapse: collapse !important;
+    font-size: 7.5pt !important;
+    width: 100% !important;
+  }
+
+  .cs49-table th,
+  .cs49-table td {
+    border: 1px solid #000000 !important;
+    color: #000000 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .cs49-table thead th {
+    background-color: #f8fafc !important;
+    font-size: 7pt !important;
+    padding: 2.5px 2px !important;
+  }
+
+  .cs49-table thead tr.cs49-col-nums th {
+    background-color: #f1f5f9 !important;
+    font-size: 6.5pt !important;
+    padding: 1px !important;
+  }
+
+  .cs49-table tbody td {
+    padding: 2.5px 4px !important;
+    font-size: 7.5pt !important;
+  }
+
+  .cs49-table tr.empty-ledger-row td {
+    height: 18px !important;
+  }
+
+  .cs49-table .cs49-sub {
+    color: #000000 !important;
+  }
+
+  .cs49-total-row td {
+    border-top: 1.5px solid #000000 !important;
+    border-bottom: 1.5px solid #000000 !important;
+    background-color: transparent !important;
+  }
+
+  .cs49-depr-summary {
+    border: 1px solid #000000 !important;
+    margin-top: 8px !important;
+    padding: 4px 8px !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .cs49-depr-label {
+    color: #000000 !important;
+    font-size: 7.5pt !important;
+  }
+
+  .cs49-depr-value {
+    color: #000000 !important;
+    font-size: 8pt !important;
+  }
+
+  .cs49-method-note {
+    color: #000000 !important;
+    font-size: 7pt !important;
+  }
+
+  .cs49-certificate {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    border-top: 1.5px solid #000000 !important;
+    margin-top: 8px !important;
+    padding-top: 6px !important;
+  }
+
+  .cs49-cert-title {
+    color: #000000 !important;
+    font-size: 8.5pt !important;
+    margin-bottom: 4px !important;
+  }
+
+  .cs49-cert-list {
+    font-size: 7pt !important;
+    color: #000000 !important;
+  }
+
+  .cs49-cert-check {
+    color: #000000 !important;
+    font-size: 8pt !important;
+  }
+
+  .cs49-signatures {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    margin-top: 10px !important;
+    padding-top: 6px !important;
+    font-size: 7.5pt !important;
+  }
+
+  .cs49-sig-label,
+  .cs49-sig-name {
+    color: #000000 !important;
+  }
+}

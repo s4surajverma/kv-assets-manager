@@ -1,0 +1,29 @@
+{
+  "name": "kvs-assets-management-api",
+  "version": "1.0.0",
+  "description": "KVS Asset Management REST API",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "db:migrate": "node migrate.js",
+    "db:setup": "cd .. && setup_local_db.bat",
+    "db:reset": "cd .. && setup_local_db.bat"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "express-validator": "^7.1.0",
+    "helmet": "^7.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.0",
+    "node-cron": "^3.0.3",
+    "pdfkit": "^0.15.0",
+    "pg": "^8.12.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4"
+  }
+}

@@ -1,0 +1,10 @@
+import api from './axios';
+export const getAssets = (params) => api.get('/assets', { params });
+export const getAsset = (id) => api.get(`/assets/${id}`);
+export const createAsset = (data) => api.post('/assets', data);
+export const updateAsset = (id, data) => api.put(`/assets/${id}`, data);
+export const getRegisterView = (params) => api.get('/assets/register/view', { params });
+export const getGFR22Register = (params) => api.get('/assets/gfr22/register', { params });
+export const getAgingReport = (params) => api.get('/assets/aging/report', { params });
+export const getSmallValue = () => api.get('/assets/small-value/list');
+export const getSchedule4Data = (params) => api.get('/assets/schedule4/data', { params });

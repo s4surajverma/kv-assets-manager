@@ -1,0 +1,87 @@
+# ==========================================
+# KV Assets Manager - Git Ignore Configuration
+# ==========================================
+
+# 1. Environment & Secrets (Crucial: Keep credentials private!)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+server/.env
+client/.env
+*.env
+*.env.*
+!.env.example
+!server/.env.example
+!client/.env.example
+
+# 2. Dependencies
+node_modules/
+client/node_modules/
+server/node_modules/
+.pnp
+.pnp.js
+
+# 3. Production Builds
+dist/
+dist-ssr/
+client/dist/
+build/
+out/
+*.local
+
+# 4. Reference & Non-repository data
+not-required/
+
+# 5. Logs & Debug outputs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# 6. Database Backups & Temporary Dumps
+*.dump
+*.bak
+*.sql.bak
+*.sqlite
+*.sqlite3
+
+# 7. Python Artifacts (extraction & conversion scripts)
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyd
+.pytest_cache/
+
+# 8. OS Generated Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+[Dd]esktop.ini
+
+# 9. IDE & Editor Files
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*~
+*.sublime-project
+*.sublime-workspace
+
+# 10. Temporary & Scratch Files
+tmp/
+temp/
+scratch/

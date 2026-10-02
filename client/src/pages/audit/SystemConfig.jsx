@@ -42,8 +42,40 @@ export default function SystemConfig() {
   const handleOpen = (data) => {
     if (!data) return;
     setEditData(data);
-    setFormData({ kv_code: data.kv_code, kv_name_en: data.kv_name_en, kv_name_hi: data.kv_name_hi, regional_office_en: data.regional_office_en, regional_office_hi: data.regional_office_hi, status: data.status, is_active: data.is_active });
+    setFormData({
+      kv_code: data.kv_code,
+      kv_name_en: data.kv_name_en,
+      kv_name_hi: data.kv_name_hi,
+      regional_office_en: data.regional_office_en,
+      regional_office_hi: data.regional_office_hi,
+      status: data.status,
+      is_active: data.is_active,
+      admin_name: data.admin_name || '',
+      admin_email: data.admin_email || '',
+      admin_emp_code: data.admin_emp_code || ''
+    });
     setShowModal(true);
+  };
+
+  const handleQuickApprove = async (row) => {
+    try {
+      await updateVidyalaya(row.id, { status: 'APPROVED', is_active: true });
+      toast.success(`${row.kv_name_en} (${row.kv_code}) approved!`);
+      fetchData();
+    } catch {
+      // toast error handled via interceptor
+    }
+  };
+
+  const handleQuickReject = async (row) => {
+    if (!window.confirm(`Are you sure you want to reject registration for ${row.kv_name_en} (${row.kv_code})?`)) return;
+    try {
+      await updateVidyalaya(row.id, { status: 'REJECTED', is_active: false });
+      toast.success(`${row.kv_name_en} registration rejected.`);
+      fetchData();
+    } catch {
+      // toast error handled via interceptor
+    }
   };
 
   const handleOpenCat = (data) => {
@@ -85,15 +117,55 @@ export default function SystemConfig() {
     { key: 'id', label: 'ID', width: '50px' },
     { key: 'kv_code', label: 'KV Code' },
     { key: 'kv_name_en', label: 'KV Name (EN)' },
-    { key: 'kv_name_hi', label: 'KV Name (HI)' },
-    { key: 'regional_office_en', label: 'RO (EN)' },
-    { key: 'regional_office_hi', label: 'RO (HI)' },
+    { key: 'regional_office_en', label: 'RO' },
+    {
+      key: 'admin',
+      label: 'Admin / Applicant',
+      render: (_, row) => (
+        row.admin_name ? (
+          <div>
+            <div className="text-xs font-semibold text-slate-800">{row.admin_name}</div>
+            <div className="text-[11px] text-slate-500">{row.admin_email || row.admin_emp_code}</div>
+          </div>
+        ) : (
+          <span className="text-xs text-slate-400">None</span>
+        )
+      )
+    },
     { key: 'status', label: 'Status', render: (val) => <StatusBadge status={val} /> },
     { key: 'is_active', label: 'Active', render: (val) => val ? 'Yes' : 'No' },
     { key: 'user_count', label: 'Users' },
     {
       key: 'actions', label: 'Actions', render: (_, row) => (
-        <button onClick={() => handleOpen(row)} className="text-blue-600 hover:text-blue-800 text-sm">Edit</button>
+        <div className="flex items-center gap-1.5">
+          {row.status === 'PENDING' && (
+            <>
+              <button
+                type="button"
+                onClick={() => handleQuickApprove(row)}
+                className="px-2.5 py-1 text-xs font-medium rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition-colors"
+                title="Approve Vidyalaya"
+              >
+                Approve
+              </button>
+              <button
+                type="button"
+                onClick={() => handleQuickReject(row)}
+                className="px-2 py-1 text-xs font-medium rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 transition-colors"
+                title="Reject Vidyalaya"
+              >
+                Reject
+              </button>
+            </>
+          )}
+          <button
+            type="button"
+            onClick={() => handleOpen(row)}
+            className="text-blue-600 hover:text-blue-800 text-xs font-medium px-1.5 py-1 rounded hover:bg-blue-50 transition-colors"
+          >
+            Review
+          </button>
+        </div>
       )
     }
   ];
@@ -139,10 +211,19 @@ export default function SystemConfig() {
       )}
 
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 max-h-[90vh] overflow-y-auto">
             <h3 className="text-lg font-semibold mb-4">Review Vidyalaya Registration</h3>
             <form onSubmit={handleSubmit} className="space-y-4">
+              {editData?.admin_name && (
+                <div className="bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs space-y-1">
+                  <div className="font-semibold text-slate-700">Applicant / Administrator Details</div>
+                  <div className="text-slate-600"><span className="text-slate-400">Name:</span> {editData.admin_name}</div>
+                  <div className="text-slate-600"><span className="text-slate-400">Email:</span> {editData.admin_email}</div>
+                  {editData.admin_emp_code && <div className="text-slate-600"><span className="text-slate-400">Login ID:</span> {editData.admin_emp_code}</div>}
+                </div>
+              )}
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">KV Code</label>
                 <input required type="text" value={formData.kv_code} disabled
@@ -173,16 +254,30 @@ export default function SystemConfig() {
                 <>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                    <select value={formData.status} onChange={e => setFormData({...formData, status: e.target.value})}
-                      className="w-full border border-gray-300 rounded px-3 py-2 text-sm">
+                    <select
+                      value={formData.status}
+                      onChange={e => {
+                        const newStatus = e.target.value;
+                        setFormData(prev => ({
+                          ...prev,
+                          status: newStatus,
+                          is_active: newStatus === 'APPROVED' ? true : (newStatus === 'REJECTED' ? false : prev.is_active)
+                        }));
+                      }}
+                      className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                    >
                       <option value="PENDING">PENDING</option>
                       <option value="APPROVED">APPROVED</option>
-                      <option value="SUSPENDED">SUSPENDED</option>
+                      <option value="REJECTED">REJECTED</option>
                     </select>
                   </div>
                   <div>
                     <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mt-2">
-                      <input type="checkbox" checked={formData.is_active} onChange={e => setFormData({...formData, is_active: e.target.checked})} />
+                      <input
+                        type="checkbox"
+                        checked={formData.is_active}
+                        onChange={e => setFormData({ ...formData, is_active: e.target.checked })}
+                      />
                       Is Active
                     </label>
                   </div>

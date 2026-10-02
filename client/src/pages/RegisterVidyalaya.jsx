@@ -11,12 +11,15 @@ import {
   ArrowLeft,
   CheckCircle2,
   Loader2,
-  Sparkles
+  Sparkles,
+  Clock,
+  ShieldAlert
 } from 'lucide-react';
 
 export default function RegisterVidyalaya() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [submittedData, setSubmittedData] = useState(null);
   const [formData, setFormData] = useState({
     kv_code: '',
     kv_name_en: '',
@@ -45,14 +48,75 @@ export default function RegisterVidyalaya() {
         admin_emp_code: `KV.${formData.kv_code}`
       };
       await registerVidyalaya(payload);
-      toast.success('Vidyalaya registered successfully! You may now log in.');
-      navigate('/login');
+      toast.success('Registration submitted! Awaiting Super Administrator approval.', { duration: 6000 });
+      setSubmittedData({
+        kv_code: formData.kv_code,
+        kv_name_en: formData.kv_name_en,
+        kv_name_hi: formData.kv_name_hi,
+        regional_office_en: formData.regional_office_en,
+        admin_name: formData.admin_name,
+        admin_email: formData.admin_email,
+        login_id: `KV.${formData.kv_code}`
+      });
     } catch {
       // Error handled via interceptor
     } finally {
       setLoading(false);
     }
   };
+
+  if (submittedData) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-950 font-sans py-12 px-4 sm:px-6">
+        <div className="w-full max-w-lg bg-slate-900/95 border border-slate-800 rounded-3xl p-8 sm:p-10 shadow-2xl backdrop-blur-xl text-slate-100 text-center animate-fade-in">
+          <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center mx-auto mb-5 shadow-lg shadow-amber-500/10">
+            <Clock className="w-8 h-8" />
+          </div>
+
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20 mb-3">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+            Pending Super Admin Authorization
+          </span>
+
+          <h2 className="text-2xl font-bold text-white mb-2">Registration Submitted!</h2>
+          <p className="text-xs sm:text-sm text-slate-400 mb-6">
+            Your registration application for <strong className="text-white">{submittedData.kv_name_en}</strong> has been received. You will be able to log in once a Super Administrator reviews and approves this institution.
+          </p>
+
+          <div className="bg-slate-950/70 border border-slate-800/80 rounded-2xl p-4 text-left mb-6 space-y-2.5 text-xs">
+            <div className="flex justify-between pb-1.5 border-b border-slate-800/60">
+              <span className="text-slate-400">KV Code:</span>
+              <span className="font-semibold text-slate-200">{submittedData.kv_code}</span>
+            </div>
+            <div className="flex justify-between pb-1.5 border-b border-slate-800/60">
+              <span className="text-slate-400">Assigned Admin Login ID:</span>
+              <span className="font-mono font-semibold text-blue-400">{submittedData.login_id}</span>
+            </div>
+            <div className="flex justify-between pb-1.5 border-b border-slate-800/60">
+              <span className="text-slate-400">Primary Administrator:</span>
+              <span className="font-semibold text-slate-200">{submittedData.admin_name}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-400">Regional Office:</span>
+              <span className="font-semibold text-slate-200">{submittedData.regional_office_en}</span>
+            </div>
+          </div>
+
+          <p className="text-xs text-slate-500 mb-6 leading-relaxed">
+            Please keep your credentials secure. If you attempt to log in before authorization is granted, the portal will report that your registration is pending approval.
+          </p>
+
+          <Link
+            to="/login"
+            className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-sm font-semibold transition-all shadow-lg shadow-blue-600/25 active:scale-[0.99]"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Return to Portal Login</span>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-950 font-sans py-12 px-4 sm:px-6">

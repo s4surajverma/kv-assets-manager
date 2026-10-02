@@ -32,10 +32,10 @@ router.post('/register-vidyalaya', [
       return error(res, 'Vidyalaya with this KV Code already exists', 400);
     }
 
-    // Insert Vidyalaya as APPROVED and active for immediate portal access
+    // Insert Vidyalaya as PENDING and inactive until approved by SuperAdmin
     const vidRes = await client.query(
       `INSERT INTO vidyalaya (kv_code, kv_name_en, kv_name_hi, regional_office_en, regional_office_hi, status, is_active, is_system) 
-       VALUES ($1, $2, $3, $4, $5, 'APPROVED', true, false) RETURNING id`,
+       VALUES ($1, $2, $3, $4, $5, 'PENDING', false, false) RETURNING id`,
       [kv_code, kv_name_en, kv_name_hi, regional_office_en, regional_office_hi]
     );
     const vidId = vidRes.rows[0].id;
@@ -57,7 +57,7 @@ router.post('/register-vidyalaya', [
     await client.query('INSERT INTO user_role (user_id, role_id) VALUES ($1, $2)', [userId, adminRoleId]);
 
     await client.query('COMMIT');
-    created(res, { message: 'Vidyalaya registered successfully and is pending authorization.' });
+    created(res, { message: 'Vidyalaya registered successfully and is awaiting Super Administrator approval.' });
   } catch (err) {
     await client.query('ROLLBACK');
     next(err);
@@ -132,7 +132,8 @@ router.post(
       const user = rows[0];
 
       // Vidyalaya must be approved and active
-      if (user.vidyalaya_status !== 'APPROVED') return error(res, 'Your Vidyalaya registration is pending approval', 403);
+      if (user.vidyalaya_status === 'REJECTED') return error(res, 'Your Vidyalaya registration has been rejected. Please contact the System Administrator', 403);
+      if (user.vidyalaya_status !== 'APPROVED') return error(res, 'Your Vidyalaya registration is pending approval by the System Administrator', 403);
       if (!user.vidyalaya_active) return error(res, 'Your Vidyalaya has been temporarily suspended', 403);
 
       const valid = await bcrypt.compare(password, user.password_hash);

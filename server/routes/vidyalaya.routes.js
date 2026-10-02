@@ -340,11 +340,14 @@ router.get('/', withSuperAdmin(async (req, res) => {
 
   const { rows } = await db.query(
     `SELECT v.*, 
-            COUNT(u.id) as user_count 
+            COUNT(DISTINCT u.id) as user_count,
+            (SELECT u2.name FROM "user" u2 WHERE u2.vidyalaya_id = v.id AND u2.is_deleted = false ORDER BY u2.id ASC LIMIT 1) as admin_name,
+            (SELECT u2.email FROM "user" u2 WHERE u2.vidyalaya_id = v.id AND u2.is_deleted = false ORDER BY u2.id ASC LIMIT 1) as admin_email,
+            (SELECT u2.employee_code FROM "user" u2 WHERE u2.vidyalaya_id = v.id AND u2.is_deleted = false ORDER BY u2.id ASC LIMIT 1) as admin_emp_code
      FROM vidyalaya v
      LEFT JOIN "user" u ON u.vidyalaya_id = v.id AND u.is_deleted = false
      GROUP BY v.id
-     ORDER BY v.id`
+     ORDER BY CASE WHEN v.status = 'PENDING' THEN 0 ELSE 1 END, v.id DESC`
   );
   success(res, rows);
 }));
@@ -355,8 +358,15 @@ router.put('/:id', withSuperAdmin(async (req, res) => {
     return res.status(403).json({ success: false, message: 'Only System Administrators can manage Vidyalayas' });
   }
 
-  const { kv_name_en, kv_name_hi, regional_office_en, regional_office_hi, status, is_active } = req.body;
+  let { kv_name_en, kv_name_hi, regional_office_en, regional_office_hi, status, is_active } = req.body;
   const vidyalayaId = parseInt(req.params.id, 10);
+
+  // If status is being updated to APPROVED and is_active wasn't explicitly given, activate it
+  if (status === 'APPROVED' && is_active === undefined) {
+    is_active = true;
+  } else if (status === 'REJECTED' && is_active === undefined) {
+    is_active = false;
+  }
 
   const { rows } = await db.query(
     `UPDATE vidyalaya 

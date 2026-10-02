@@ -428,27 +428,40 @@ router.post('/:id/reset-password', withSuperAdmin(async (req, res, next) => {
     const adminUser = userRows[0];
     const hash = await bcrypt.hash(password, 12);
 
-    await db.query(
-      'UPDATE "user" SET password_hash = $1, updated_at = NOW() WHERE id = $2',
-      [hash, adminUser.id]
-    );
+    const client = await db.pool.connect();
+    try {
+      await client.query('BEGIN');
 
-    await db.query(
-      `INSERT INTO audit_log (table_name, record_id, action, new_values, changed_by, vidyalaya_id)
-       VALUES ($1, $2, $3, $4, $5, $6)`,
-      [
-        'user',
-        adminUser.id,
-        'SUPERADMIN_PASSWORD_RESET',
-        {
-          vidyalaya_code: vidyalaya.kv_code,
-          admin_employee_code: adminUser.employee_code,
-          admin_name: adminUser.name
-        },
-        req.user.id || 0,
-        vidyalayaId
-      ]
-    );
+      await client.query(
+        'UPDATE "user" SET password_hash = $1, updated_at = NOW() WHERE id = $2',
+        [hash, adminUser.id]
+      );
+
+      await client.query(
+        `INSERT INTO audit_log (table_name, record_id, action, new_values, changed_by, vidyalaya_id)
+         VALUES ($1, $2, $3, $4, $5, $6)`,
+        [
+          'user',
+          adminUser.id,
+          'UPDATE',
+          {
+            action_detail: 'SUPERADMIN_PASSWORD_RESET',
+            vidyalaya_code: vidyalaya.kv_code,
+            admin_employee_code: adminUser.employee_code,
+            admin_name: adminUser.name
+          },
+          req.user?.id || 0,
+          vidyalayaId
+        ]
+      );
+
+      await client.query('COMMIT');
+    } catch (dbErr) {
+      await client.query('ROLLBACK');
+      throw dbErr;
+    } finally {
+      client.release();
+    }
 
     success(res, {
       message: `Password for ${vidyalaya.kv_name_en} administrator (${adminUser.name} - ${adminUser.employee_code}) has been reset successfully.`,

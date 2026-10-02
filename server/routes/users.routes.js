@@ -124,8 +124,8 @@ router.post(
         [
           'user',
           targetUserId,
-          'PASSWORD_RESET',
-          { reset_for: targetUser.employee_code, name: targetUser.name },
+          'UPDATE',
+          { action_detail: 'PASSWORD_RESET', reset_for: targetUser.employee_code, name: targetUser.name },
           req.user.id,
           targetUser.vidyalaya_id
         ]
@@ -186,7 +186,7 @@ router.put('/:id', authorize('Admin'),
       await db.query(
         `INSERT INTO audit_log (table_name, record_id, action, new_values, changed_by, vidyalaya_id)
          VALUES ($1, $2, $3, $4, $5, $6)`,
-        ['user', rows[0].id, hash ? 'UPDATE_WITH_PASSWORD' : 'UPDATE', rows[0], req.user.id, rows[0].vidyalaya_id]
+        ['user', rows[0].id, 'UPDATE', { ...rows[0], password_updated: !!hash }, req.user.id, rows[0].vidyalaya_id]
       );
 
       success(res, rows[0]);

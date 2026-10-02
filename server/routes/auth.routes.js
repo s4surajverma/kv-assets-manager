@@ -78,11 +78,13 @@ router.post(
     try {
       const { username, password } = req.body;
 
+      const cleanUsername = (username || '').trim();
+
       // ── SuperAdmin: env-based login (no DB record) ──
       if (
         process.env.SUPERADMIN_USERNAME &&
         process.env.SUPERADMIN_PASSWORD &&
-        username === process.env.SUPERADMIN_USERNAME &&
+        cleanUsername === process.env.SUPERADMIN_USERNAME &&
         password === process.env.SUPERADMIN_PASSWORD
       ) {
         const token = jwt.sign(
@@ -102,7 +104,7 @@ router.post(
             id: 0,
             name: 'Super Administrator',
             email: '',
-            employee_code: username,
+            employee_code: cleanUsername,
             roles: ['SuperAdmin'],
             isSuperAdmin: true,
             kv_code: 'SYSTEM',
@@ -121,11 +123,24 @@ router.post(
          JOIN vidyalaya v ON v.id = u.vidyalaya_id
          LEFT JOIN user_role ur ON ur.user_id = u.id
          LEFT JOIN role r ON r.id = ur.role_id
-         WHERE u.employee_code = $1
+         WHERE (
+           UPPER(TRIM(u.employee_code)) = UPPER(TRIM($1))
+           OR UPPER(TRIM(u.employee_code)) = 'KV.' || UPPER(TRIM($1))
+           OR UPPER(TRIM(u.email)) = UPPER(TRIM($1))
+           OR (
+             UPPER(TRIM(v.kv_code)) = UPPER(TRIM($1))
+             AND u.id = (
+               SELECT MIN(u2.id)
+               FROM "user" u2
+               WHERE u2.vidyalaya_id = v.id AND u2.is_deleted = false AND u2.is_active = true
+             )
+           )
+         )
            AND u.is_active = true
            AND u.is_deleted = false
-         GROUP BY u.id, v.id`,
-        [username]
+         GROUP BY u.id, v.id
+         LIMIT 1`,
+        [cleanUsername]
       );
 
       if (rows.length === 0) return error(res, 'Invalid credentials', 401);

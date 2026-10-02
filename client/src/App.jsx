@@ -52,12 +52,14 @@ import TransitionDetail from './pages/transition/TransitionDetail';
 import NonConsumableIssueList from './pages/non-consumables/NonConsumableIssueList';
 import NonConsumableIssueForm from './pages/non-consumables/NonConsumableIssueForm';
 import NonConsumableReturnForm from './pages/non-consumables/NonConsumableReturnForm';
+import MobileInstallBanner from './components/MobileInstallBanner';
 
 export default function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
         <Toaster position="top-right" toastOptions={{ duration: 3000, style: { fontSize: '13px' } }} />
+        <MobileInstallBanner />
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<RegisterVidyalaya />} />

@@ -1,0 +1,19 @@
+{
+  "name": "KVS Asset Management System",
+  "short_name": "KVS Assets",
+  "description": "Kendriya Vidyalaya Sangathan (KVS) Fixed Assets & Stock Register Management Portal",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#1e3a8a",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

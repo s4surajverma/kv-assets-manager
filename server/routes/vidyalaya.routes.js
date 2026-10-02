@@ -388,4 +388,81 @@ router.put('/:id', withSuperAdmin(async (req, res) => {
   success(res, rows[0]);
 }));
 
+// ==================== RESET VIDYALAYA ADMIN PASSWORD (SuperAdmin Only) ====================
+router.post('/:id/reset-password', withSuperAdmin(async (req, res, next) => {
+  try {
+    if (!req.user.isSuperAdmin) {
+      return res.status(403).json({ success: false, message: 'Only System Administrators can reset Vidyalaya passwords' });
+    }
+
+    const vidyalayaId = parseInt(req.params.id, 10);
+    const { password } = req.body;
+
+    if (!password || password.length < 6) {
+      return res.status(400).json({ success: false, error: 'Password must be at least 6 characters long' });
+    }
+
+    // Check if vidyalaya exists
+    const { rows: vidRows } = await db.query('SELECT * FROM vidyalaya WHERE id = $1', [vidyalayaId]);
+    if (vidRows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Vidyalaya not found' });
+    }
+    const vidyalaya = vidRows[0];
+
+    // Find the primary administrator user for this vidyalaya
+    const { rows: userRows } = await db.query(
+      `SELECT u.id, u.name, u.email, u.employee_code 
+       FROM "user" u
+       LEFT JOIN user_role ur ON ur.user_id = u.id
+       LEFT JOIN role r ON r.id = ur.role_id
+       WHERE u.vidyalaya_id = $1 AND u.is_deleted = false
+       ORDER BY CASE WHEN r.name = 'Admin' THEN 0 ELSE 1 END, u.id ASC
+       LIMIT 1`,
+      [vidyalayaId]
+    );
+
+    if (userRows.length === 0) {
+      return res.status(404).json({ success: false, error: 'No administrator user found for this Vidyalaya' });
+    }
+
+    const adminUser = userRows[0];
+    const hash = await bcrypt.hash(password, 12);
+
+    await db.query(
+      'UPDATE "user" SET password_hash = $1, updated_at = NOW() WHERE id = $2',
+      [hash, adminUser.id]
+    );
+
+    await db.query(
+      `INSERT INTO audit_log (table_name, record_id, action, new_values, changed_by, vidyalaya_id)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [
+        'user',
+        adminUser.id,
+        'SUPERADMIN_PASSWORD_RESET',
+        {
+          vidyalaya_code: vidyalaya.kv_code,
+          admin_employee_code: adminUser.employee_code,
+          admin_name: adminUser.name
+        },
+        req.user.id || 0,
+        vidyalayaId
+      ]
+    );
+
+    success(res, {
+      message: `Password for ${vidyalaya.kv_name_en} administrator (${adminUser.name} - ${adminUser.employee_code}) has been reset successfully.`,
+      user: {
+        id: adminUser.id,
+        name: adminUser.name,
+        email: adminUser.email,
+        employee_code: adminUser.employee_code
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+}));
+
 module.exports = router;
+

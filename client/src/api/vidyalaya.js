@@ -30,3 +30,9 @@ export const deleteAccount = async (password, confirmPhrase) => {
   return res.data;
 };
 
+export const resetVidyalayaPassword = async (id, password) => {
+  const { data } = await axios.post(`/vidyalayas/${id}/reset-password`, { password });
+  return data;
+};
+
+

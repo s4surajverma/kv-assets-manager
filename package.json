@@ -8,7 +8,7 @@
     "build:server": "npm install --prefix server",
     "db:migrate": "npm run db:migrate --prefix server",
     "build": "npm run build:client && npm run build:server",
-    "render-build": "npm install --prefix server && npm install --prefix client && npm run build --prefix client && npm run db:migrate --prefix server",
+    "render-build": "npm install --prefix server && npm install --prefix client --include=dev && npm run build --prefix client && npm run db:migrate --prefix server",
     "start": "node server/server.js"
   }
 }

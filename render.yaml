@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: kv-assets-manager
+    runtime: node
+    plan: free
+    buildCommand: npm run render-build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: SUPERADMIN_USERNAME
+        sync: false
+      - key: SUPERADMIN_PASSWORD
+        sync: false

@@ -39,20 +39,21 @@ const MIGRATIONS = [
   'migrations/010_depreciation_integration.sql',
   'migrations/011_non_consumable_movement.sql',
   'migrations/012_opening_balance.sql',
+  'migrations/013_default_depreciation_rules.sql',
 ];
 
 const isDev = (process.env.NODE_ENV || 'development') === 'development';
 const connectionString = isDev
-  ? process.env.DATABASE_URL_LOCAL
-  : process.env.DATABASE_URL_PROD;
+  ? (process.env.DATABASE_URL_LOCAL || process.env.DATABASE_URL)
+  : (process.env.DATABASE_URL_PROD || process.env.DATABASE_URL);
 
 if (!connectionString) {
-  console.error(`FATAL: ${isDev ? 'DATABASE_URL_LOCAL' : 'DATABASE_URL_PROD'} is not set in .env`);
+  console.error(`FATAL: DATABASE_URL_PROD or DATABASE_URL is not set in environment`);
   process.exit(1);
 }
 
 const clientConfig = { connectionString };
-if (!isDev) {
+if (!isDev || (connectionString && (connectionString.includes('neon.tech') || connectionString.includes('supabase.co') || connectionString.includes('supabase.com') || connectionString.includes('sslmode=require')))) {
   clientConfig.ssl = { rejectUnauthorized: false };
 }
 

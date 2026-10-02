@@ -1,4 +1,6 @@
 require('dotenv').config();
+const path = require('path');
+const fs = require('fs');
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
@@ -9,7 +11,7 @@ const errorHandler = require('./middleware/errorHandler');
 const app = express();
 
 // ======================== GLOBAL MIDDLEWARE ========================
-app.use(helmet());
+app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors());
 app.use(morgan('dev'));
 app.use(express.json({ limit: '10mb' }));
@@ -41,6 +43,16 @@ app.use('/api/v1/vidyalayas', authenticate, require('./routes/vidyalaya.routes')
 app.use('/api/v1/transitions', authenticate, require('./routes/stock-transition.routes'));
 app.use('/api/v1/onboarding', authenticate, require('./routes/onboarding.routes'));
 app.use('/api/v1/non-consumables', authenticate, require('./routes/nonConsumable.routes'));
+
+// ======================== STATIC FRONTEND (SPA) ========================
+const clientDist = path.join(__dirname, '../client/dist');
+if (fs.existsSync(clientDist)) {
+  app.use(express.static(clientDist));
+  app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api')) return next();
+    res.sendFile(path.join(clientDist, 'index.html'));
+  });
+}
 
 // ======================== 404 ========================
 app.use((_req, res) => {

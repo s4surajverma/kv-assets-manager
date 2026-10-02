@@ -6,11 +6,11 @@ const { getContext } = require('./tenantContext');
 // ============================================================
 const isDev = (process.env.NODE_ENV || 'development') === 'development';
 const connectionString = isDev
-  ? process.env.DATABASE_URL_LOCAL
-  : process.env.DATABASE_URL_PROD;
+  ? (process.env.DATABASE_URL_LOCAL || process.env.DATABASE_URL)
+  : (process.env.DATABASE_URL_PROD || process.env.DATABASE_URL);
 
 if (!connectionString) {
-  console.error(`[DB] FATAL: ${isDev ? 'DATABASE_URL_LOCAL' : 'DATABASE_URL_PROD'} is not set in .env`);
+  console.error(`[DB] FATAL: DATABASE_URL_PROD or DATABASE_URL is not set in environment`);
   process.exit(1);
 }
 
@@ -20,7 +20,7 @@ const poolConfig = {
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 5000,
 };
-if (!isDev || (connectionString && (connectionString.includes('neon.tech') || connectionString.includes('sslmode=require')))) {
+if (!isDev || (connectionString && (connectionString.includes('neon.tech') || connectionString.includes('supabase.co') || connectionString.includes('supabase.com') || connectionString.includes('sslmode=require')))) {
   poolConfig.ssl = { rejectUnauthorized: false };
 }
 

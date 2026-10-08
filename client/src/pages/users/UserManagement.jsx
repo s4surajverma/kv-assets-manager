@@ -5,7 +5,7 @@ import DataTable from '../../components/DataTable';
 import toast from 'react-hot-toast';
 import RoleGate from '../../components/RoleGate';
 import { formatDate } from '../../utils/helpers';
-import { Key, Eye, EyeOff, Sparkles, Lock } from 'lucide-react';
+import { Key, Eye, EyeOff, Sparkles, Lock, Loader2 } from 'lucide-react';
 
 export default function UserManagement() {
   const [users, setUsers] = useState([]);
@@ -14,6 +14,7 @@ export default function UserManagement() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editData, setEditData] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
 
   // Dedicated Password Reset Modal State
   const [resetModalUser, setResetModalUser] = useState(null);
@@ -109,7 +110,9 @@ export default function UserManagement() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (submitting) return;
     try {
+      setSubmitting(true);
       const payload = { ...formData, operational_department_id: formData.operational_department_id ? parseInt(formData.operational_department_id) : null };
       if (editData) {
         if (!payload.password || !payload.password.trim()) {
@@ -121,11 +124,15 @@ export default function UserManagement() {
         toast.success('User updated successfully');
       } else {
         await createUser(payload);
-        toast.success('User created');
+        toast.success('User created successfully');
       }
       setShowModal(false);
       fetchData();
-    } catch (err) {}
+    } catch (err) {
+      // Handled by axios interceptor
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleDelete = async (row) => {
@@ -228,111 +235,134 @@ export default function UserManagement() {
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden transform transition-all animate-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col">
             <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50 flex items-center justify-between flex-shrink-0">
               <h3 className="text-lg font-bold text-gray-900">{editData ? 'Update User Profile' : 'Create New User'}</h3>
-              <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+              <button 
+                type="button" 
+                disabled={submitting} 
+                onClick={() => setShowModal(false)} 
+                className="text-gray-400 hover:text-gray-600 text-xl leading-none disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+              >
+                &times;
+              </button>
             </div>
             
             <form onSubmit={handleSubmit} className="p-6 space-y-5 overflow-y-auto">
-              <div className="grid grid-cols-2 gap-5">
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Full Name</label>
-                  <input required type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})}
-                    className="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow" 
-                    placeholder="e.g. Rahul Sharma" />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Email Address</label>
-                  <input required type="email" disabled={!!editData} value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})}
-                    className="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow disabled:bg-gray-50 disabled:text-gray-500" 
-                    placeholder="name@kvs.gov.in" />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-5">
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Employee Code</label>
-                  <input required type="text" value={formData.employee_code} onChange={e => setFormData({...formData, employee_code: e.target.value})}
-                    className="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow font-mono" 
-                    placeholder="e.g. EMP001" />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Designation</label>
-                  <input type="text" value={formData.designation} onChange={e => setFormData({...formData, designation: e.target.value})}
-                    className="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow" 
-                    placeholder="e.g. PGT Computer Science" />
-                </div>
-              </div>
-              
-              <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Primary Department (Optional)</label>
-                <select value={formData.operational_department_id} onChange={e => setFormData({...formData, operational_department_id: e.target.value})}
-                  className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow bg-white">
-                  <option value="">— Unassigned —</option>
-                  {depts.map(d => <option key={d.id} value={d.id}>{d.name} ({d.code})</option>)}
-                </select>
-              </div>
-
-              {!editData && (
-                <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-4">
+              <fieldset disabled={submitting} className="space-y-5">
+                <div className="grid grid-cols-2 gap-5">
                   <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Temporary Password</label>
-                    <input required minLength={6} type="password" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})}
-                      className="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow" 
-                      placeholder="Minimum 6 characters" />
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Full Name</label>
+                    <input required type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})}
+                      className="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow disabled:bg-gray-100 disabled:text-gray-500" 
+                      placeholder="e.g. Rahul Sharma" />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">System Roles</label>
-                    <div className="flex flex-wrap gap-2">
-                      {roles.filter(r => r.name !== 'RegionalOfficer' && r.name !== 'SuperAdmin').map(r => (
-                        <label key={r.id} className={`flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-lg border cursor-pointer transition-colors ${formData.role_ids.includes(r.id) ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
-                          <input type="checkbox" className="rounded text-indigo-600 focus:ring-indigo-500" checked={formData.role_ids.includes(r.id)} onChange={() => handleRoleToggle(r.id)} />
-                          {r.name}
-                        </label>
-                      ))}
-                    </div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Email Address</label>
+                    <input required type="email" disabled={!!editData || submitting} value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})}
+                      className="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow disabled:bg-gray-100 disabled:text-gray-500" 
+                      placeholder="name@kvs.gov.in" />
                   </div>
                 </div>
-              )}
 
-              {editData && (
-                <>
-                  <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                        <Key className="w-3.5 h-3.5 text-indigo-600" />
-                        <span>Reset Password (Optional)</span>
-                      </label>
-                      <span className="text-[11px] text-slate-400">Leave blank to keep unchanged</span>
-                    </div>
-                    <input
-                      type="password"
-                      value={formData.password}
-                      onChange={e => setFormData({...formData, password: e.target.value})}
-                      className="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow bg-white font-mono"
-                      placeholder="Enter new desired password (min 6 chars)"
-                      minLength={6}
-                    />
+                <div className="grid grid-cols-2 gap-5">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Employee Code</label>
+                    <input required type="text" value={formData.employee_code} onChange={e => setFormData({...formData, employee_code: e.target.value})}
+                      className="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow font-mono disabled:bg-gray-100 disabled:text-gray-500" 
+                      placeholder="e.g. EMP001" />
                   </div>
+                  <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Designation</label>
+                    <input type="text" value={formData.designation} onChange={e => setFormData({...formData, designation: e.target.value})}
+                      className="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow disabled:bg-gray-100 disabled:text-gray-500" 
+                      placeholder="e.g. PGT Computer Science" />
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Primary Department (Optional)</label>
+                  <select value={formData.operational_department_id} onChange={e => setFormData({...formData, operational_department_id: e.target.value})}
+                    className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow bg-white disabled:bg-gray-100 disabled:text-gray-500">
+                    <option value="">— Unassigned —</option>
+                    {depts.map(d => <option key={d.id} value={d.id}>{d.name} ({d.code})</option>)}
+                  </select>
+                </div>
 
-                  <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
-                    <label className="flex items-center gap-3 cursor-pointer">
-                      <input type="checkbox" className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-gray-300" checked={formData.is_active} onChange={e => setFormData({...formData, is_active: e.target.checked})} />
-                      <div>
-                        <div className="text-sm font-bold text-gray-900">Account is Active</div>
-                        <div className="text-xs text-gray-500">Uncheck to disable this user's login access entirely.</div>
+                {!editData && (
+                  <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-4">
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Temporary Password</label>
+                      <input required minLength={6} type="password" value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})}
+                        className="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow disabled:bg-gray-100" 
+                        placeholder="Minimum 6 characters" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">System Roles</label>
+                      <div className="flex flex-wrap gap-2">
+                        {roles.filter(r => r.name !== 'RegionalOfficer' && r.name !== 'SuperAdmin').map(r => (
+                          <label key={r.id} className={`flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors ${submitting ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'} ${formData.role_ids.includes(r.id) ? 'bg-indigo-50 border-indigo-200 text-indigo-700' : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
+                            <input disabled={submitting} type="checkbox" className="rounded text-indigo-600 focus:ring-indigo-500" checked={formData.role_ids.includes(r.id)} onChange={() => handleRoleToggle(r.id)} />
+                            {r.name}
+                          </label>
+                        ))}
                       </div>
-                    </label>
+                    </div>
                   </div>
-                </>
-              )}
+                )}
+
+                {editData && (
+                  <>
+                    <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                          <Key className="w-3.5 h-3.5 text-indigo-600" />
+                          <span>Reset Password (Optional)</span>
+                        </label>
+                        <span className="text-[11px] text-slate-400">Leave blank to keep unchanged</span>
+                      </div>
+                      <input
+                        type="password"
+                        value={formData.password}
+                        onChange={e => setFormData({...formData, password: e.target.value})}
+                        className="w-full border border-gray-300 rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-shadow bg-white font-mono disabled:bg-gray-100"
+                        placeholder="Enter new desired password (min 6 chars)"
+                        minLength={6}
+                      />
+                    </div>
+
+                    <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
+                      <label className={`flex items-center gap-3 ${submitting ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}>
+                        <input disabled={submitting} type="checkbox" className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 border-gray-300" checked={formData.is_active} onChange={e => setFormData({...formData, is_active: e.target.checked})} />
+                        <div>
+                          <div className="text-sm font-bold text-gray-900">Account is Active</div>
+                          <div className="text-xs text-gray-500">Uncheck to disable this user's login access entirely.</div>
+                        </div>
+                      </label>
+                    </div>
+                  </>
+                )}
+              </fieldset>
 
               <div className="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-2">
-                <button type="button" onClick={() => setShowModal(false)} 
-                  className="px-5 py-2.5 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-100 transition-colors">
+                <button 
+                  type="button" 
+                  disabled={submitting} 
+                  onClick={() => setShowModal(false)} 
+                  className="px-5 py-2.5 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                >
                   Cancel
                 </button>
-                <button type="submit" 
-                  className="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl text-sm font-bold shadow-md hover:shadow-lg hover:-translate-y-0.5 transition-all">
-                  {editData ? 'Save Profile' : 'Create User'}
+                <button 
+                  type="submit" 
+                  disabled={submitting}
+                  className="inline-flex items-center justify-center gap-2 px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white rounded-xl text-sm font-bold shadow-md hover:shadow-lg transition-all disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer min-w-[140px]"
+                >
+                  {submitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin text-white" />
+                      <span>{editData ? 'Saving...' : 'Creating User...'}</span>
+                    </>
+                  ) : (
+                    <span>{editData ? 'Save Profile' : 'Create User'}</span>
+                  )}
                 </button>
               </div>
             </form>

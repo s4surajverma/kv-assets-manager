@@ -41,45 +41,55 @@ router.post(
   ],
   validate,
   async (req, res, next) => {
-    const client = await db.getTenantClient();
     try {
-      await client.query('BEGIN');
       const vid = req.user.vidyalaya_id;
       const { name, email, password, employee_code, operational_department_id, designation, role_ids } = req.body;
 
-      // Restrict Vidyalaya Admins from assigning external or higher roles (e.g. Regional Officer)
-      const { rows: disallowed } = await client.query(
-        "SELECT name FROM role WHERE id = ANY($1::int[]) AND name IN ('RegionalOfficer', 'SuperAdmin')",
-        [role_ids]
-      );
-      if (disallowed.length > 0) {
+      // Hash password using 10 rounds (standard & 4x faster with pure-JS bcryptjs) before taking DB connection
+      const hash = await bcrypt.hash(password, 10);
+
+      const client = await db.getTenantClient();
+      try {
+        await client.query('BEGIN');
+
+        // Restrict Vidyalaya Admins from assigning external or higher roles (e.g. Regional Officer)
+        const { rows: disallowed } = await client.query(
+          "SELECT name FROM role WHERE id = ANY($1::int[]) AND name IN ('RegionalOfficer', 'SuperAdmin')",
+          [role_ids]
+        );
+        if (disallowed.length > 0) {
+          await client.query('ROLLBACK');
+          return error(res, 'Regional Officer / SuperAdmin roles cannot be assigned at Vidyalaya level.', 403);
+        }
+
+        const { rows } = await client.query(
+          `INSERT INTO "user" (name, email, password_hash, employee_code, operational_department_id, designation, vidyalaya_id)
+           VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id, name, email, employee_code, operational_department_id, designation`,
+          [name, email, hash, employee_code, operational_department_id || null, designation || null, vid]
+        );
+        const user = rows[0];
+
+        for (const roleId of role_ids) {
+          await client.query('INSERT INTO user_role (user_id, role_id) VALUES ($1, $2)', [user.id, roleId]);
+        }
+
+        await client.query(
+          `INSERT INTO audit_log (table_name, record_id, action, new_values, changed_by, vidyalaya_id)
+           VALUES ($1, $2, $3, $4, $5, $6)`,
+          ['user', user.id, 'INSERT', user, req.user.id, vid]
+        );
+
+        await client.query('COMMIT');
+        created(res, user);
+      } catch (err) {
         await client.query('ROLLBACK');
-        return error(res, 'Regional Officer / SuperAdmin roles cannot be assigned at Vidyalaya level.', 403);
+        throw err;
+      } finally {
+        client.release();
       }
-
-      const hash = await bcrypt.hash(password, 12);
-
-      const { rows } = await client.query(
-        `INSERT INTO "user" (name, email, password_hash, employee_code, operational_department_id, designation, vidyalaya_id)
-         VALUES ($1,$2,$3,$4,$5,$6,$7) RETURNING id, name, email, employee_code, operational_department_id, designation`,
-        [name, email, hash, employee_code, operational_department_id || null, designation || null, vid]
-      );
-      const user = rows[0];
-
-      for (const roleId of role_ids) {
-        await client.query('INSERT INTO user_role (user_id, role_id) VALUES ($1, $2)', [user.id, roleId]);
-      }
-
-      await client.query(
-        `INSERT INTO audit_log (table_name, record_id, action, new_values, changed_by, vidyalaya_id)
-         VALUES ($1, $2, $3, $4, $5, $6)`,
-        ['user', user.id, 'INSERT', user, req.user.id, vid]
-      );
-
-      await client.query('COMMIT');
-      created(res, user);
-    } catch (err) { await client.query('ROLLBACK'); next(err); }
-    finally { client.release(); }
+    } catch (err) {
+      next(err);
+    }
   }
 );
 
@@ -111,7 +121,7 @@ router.post(
       }
 
       const targetUser = rows[0];
-      const hash = await bcrypt.hash(password, 12);
+      const hash = await bcrypt.hash(password, 10);
 
       await db.query(
         'UPDATE "user" SET password_hash = $1, updated_at = NOW() WHERE id = $2',
@@ -155,7 +165,7 @@ router.put('/:id', authorize('Admin'),
         if (password.trim().length < 6) {
           return error(res, 'Password must be at least 6 characters', 400);
         }
-        hash = await bcrypt.hash(password.trim(), 12);
+        hash = await bcrypt.hash(password.trim(), 10);
       }
 
       const query = isSuper

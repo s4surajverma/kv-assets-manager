@@ -17,13 +17,13 @@ const getCalendarFY = () => {
 // Helper to count records referencing a financial year
 const countFyRecords = async (code) => {
   const [stock, depr, ce, cm, sanc, verif, obs] = await Promise.all([
-    db.query('SELECT COUNT(*) AS c FROM stock_ledger WHERE financial_year = $1', [code]).catch(() => ({ rows: [{ c: 0 }] })),
-    db.query('SELECT COUNT(*) AS c FROM depreciation_ledger WHERE financial_year = $1', [code]).catch(() => ({ rows: [{ c: 0 }] })),
-    db.query('SELECT COUNT(*) AS c FROM condemnation_entry WHERE financial_year = $1', [code]).catch(() => ({ rows: [{ c: 0 }] })),
-    db.query('SELECT COUNT(*) AS c FROM condemnation_master WHERE financial_year = $1', [code]).catch(() => ({ rows: [{ c: 0 }] })),
-    db.query('SELECT COUNT(*) AS c FROM sanction WHERE financial_year = $1', [code]).catch(() => ({ rows: [{ c: 0 }] })),
-    db.query('SELECT COUNT(*) AS c FROM verification WHERE financial_year = $1', [code]).catch(() => ({ rows: [{ c: 0 }] })),
-    db.query('SELECT COUNT(*) AS c FROM opening_balance_snapshot WHERE financial_year = $1', [code]).catch(() => ({ rows: [{ c: 0 }] })),
+    db.rawQuery('SELECT COUNT(*) AS c FROM stock_ledger WHERE financial_year = $1', [code]).catch(() => ({ rows: [{ c: 0 }] })),
+    db.rawQuery('SELECT COUNT(*) AS c FROM depreciation_ledger WHERE financial_year = $1', [code]).catch(() => ({ rows: [{ c: 0 }] })),
+    db.rawQuery('SELECT COUNT(*) AS c FROM condemnation_entry WHERE financial_year = $1', [code]).catch(() => ({ rows: [{ c: 0 }] })),
+    db.rawQuery('SELECT COUNT(*) AS c FROM condemnation_master WHERE financial_year = $1', [code]).catch(() => ({ rows: [{ c: 0 }] })),
+    db.rawQuery('SELECT COUNT(*) AS c FROM sanction WHERE financial_year = $1', [code]).catch(() => ({ rows: [{ c: 0 }] })),
+    db.rawQuery('SELECT COUNT(*) AS c FROM verification WHERE financial_year = $1', [code]).catch(() => ({ rows: [{ c: 0 }] })),
+    db.rawQuery('SELECT COUNT(*) AS c FROM opening_balance_snapshot WHERE financial_year = $1', [code]).catch(() => ({ rows: [{ c: 0 }] })),
   ]);
 
   const breakdown = {

@@ -17,9 +17,10 @@ import {
   RefreshCw,
   ChevronRight,
   Sliders,
-  ExternalLink
+  ExternalLink,
+  Trash2
 } from 'lucide-react';
-import { getFinancialYears, createFinancialYear, closeFinancialYear, reopenFinancialYear } from '../../api/masters';
+import { getFinancialYears, createFinancialYear, closeFinancialYear, reopenFinancialYear, deleteFinancialYear } from '../../api/masters';
 import { formatDate } from '../../utils/helpers';
 import { useAuth } from '../../context/AuthContext';
 
@@ -31,6 +32,7 @@ export default function FinancialYearManager() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showCloseModal, setShowCloseModal] = useState(false);
   const [showReopenModal, setShowReopenModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedFY, setSelectedFY] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -132,6 +134,22 @@ export default function FinancialYearManager() {
       setSelectedFY(null);
       setReopenReason('');
       setReopenAuth('');
+      loadYears();
+    } catch (_err) {
+      // Error toast already displayed by Axios interceptor
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!selectedFY) return;
+    try {
+      setSubmitting(true);
+      await deleteFinancialYear(selectedFY.code);
+      toast.success(`Financial Year ${selectedFY.code} deleted successfully`);
+      setShowDeleteModal(false);
+      setSelectedFY(null);
       loadYears();
     } catch (_err) {
       // Error toast already displayed by Axios interceptor
@@ -380,6 +398,27 @@ export default function FinancialYearManager() {
                             <span>Reopen</span>
                           </button>
                         )}
+
+                        {fy.can_delete ? (
+                          <button
+                            onClick={() => {
+                              setSelectedFY(fy);
+                              setShowDeleteModal(true);
+                            }}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium text-rose-600 bg-rose-50 hover:bg-rose-100 border border-rose-200 transition-colors cursor-pointer"
+                            title="Delete Financial Year (0 records)"
+                          >
+                            <Trash2 className="w-3 h-3 text-rose-500" />
+                            <span>Delete</span>
+                          </button>
+                        ) : (
+                          <span
+                            className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium text-slate-400 bg-slate-50 border border-slate-200"
+                            title={`${fy.record_count || 0} active records linked across registers`}
+                          >
+                            {fy.record_count || 0} recs
+                          </span>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -600,6 +639,54 @@ export default function FinancialYearManager() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal: Delete Financial Year ── */}
+      {showDeleteModal && selectedFY && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center">
+                  <Trash2 className="w-4 h-4" />
+                </div>
+                <h3 className="text-base font-bold text-slate-900">Delete Financial Year {selectedFY.code}</h3>
+              </div>
+              <button
+                onClick={() => { setShowDeleteModal(false); setSelectedFY(null); }}
+                className="text-slate-400 hover:text-slate-600 text-lg leading-none cursor-pointer"
+              >
+                &times;
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Are you sure you want to delete <span className="font-bold text-slate-900">{selectedFY.code}</span>? This financial period currently has <strong>0 linked records</strong> across all physical stock registers, asset registers, verifications, and depreciation.
+            </p>
+
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800">
+              <span className="font-medium">⚠️ Note:</span> Only unused fiscal years with no data can be deleted. This action cannot be reversed.
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => { setShowDeleteModal(false); setSelectedFY(null); }}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={submitting}
+                className="px-4 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-xl transition-colors disabled:opacity-50 cursor-pointer"
+              >
+                {submitting ? 'Deleting...' : 'Confirm & Delete'}
+              </button>
+            </div>
           </div>
         </div>
       )}

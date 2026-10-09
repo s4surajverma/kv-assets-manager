@@ -13,4 +13,5 @@ export const getFinancialYears = (params) => api.get('/financial-years', { param
 export const createFinancialYear = (data) => api.post('/financial-years', data);
 export const closeFinancialYear = (code, data) => api.post(`/financial-years/${code}/close`, data);
 export const reopenFinancialYear = (code, data) => api.post(`/financial-years/${code}/reopen`, data);
+export const deleteFinancialYear = (code) => api.delete(`/financial-years/${code}`);
 export const getDashboard = () => api.get('/reports/dashboard');

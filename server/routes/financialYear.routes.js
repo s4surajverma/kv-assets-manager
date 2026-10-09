@@ -14,6 +14,31 @@ const getCalendarFY = () => {
   return `${startYear}-${String(startYear + 1).slice(2)}`;
 };
 
+// Helper to count records referencing a financial year
+const countFyRecords = async (code) => {
+  const [stock, depr, ce, cm, sanc, verif, obs] = await Promise.all([
+    db.query('SELECT COUNT(*) AS c FROM stock_ledger WHERE financial_year = $1', [code]).catch(() => ({ rows: [{ c: 0 }] })),
+    db.query('SELECT COUNT(*) AS c FROM depreciation_ledger WHERE financial_year = $1', [code]).catch(() => ({ rows: [{ c: 0 }] })),
+    db.query('SELECT COUNT(*) AS c FROM condemnation_entry WHERE financial_year = $1', [code]).catch(() => ({ rows: [{ c: 0 }] })),
+    db.query('SELECT COUNT(*) AS c FROM condemnation_master WHERE financial_year = $1', [code]).catch(() => ({ rows: [{ c: 0 }] })),
+    db.query('SELECT COUNT(*) AS c FROM sanction WHERE financial_year = $1', [code]).catch(() => ({ rows: [{ c: 0 }] })),
+    db.query('SELECT COUNT(*) AS c FROM verification WHERE financial_year = $1', [code]).catch(() => ({ rows: [{ c: 0 }] })),
+    db.query('SELECT COUNT(*) AS c FROM opening_balance_snapshot WHERE financial_year = $1', [code]).catch(() => ({ rows: [{ c: 0 }] })),
+  ]);
+
+  const breakdown = {
+    stock: parseInt(stock.rows[0]?.c || 0, 10),
+    depreciation: parseInt(depr.rows[0]?.c || 0, 10),
+    condemnations: parseInt(ce.rows[0]?.c || 0, 10) + parseInt(cm.rows[0]?.c || 0, 10),
+    sanctions: parseInt(sanc.rows[0]?.c || 0, 10),
+    verifications: parseInt(verif.rows[0]?.c || 0, 10),
+    opening_balance: parseInt(obs.rows[0]?.c || 0, 10),
+  };
+
+  const total = Object.values(breakdown).reduce((a, b) => a + b, 0);
+  return { total, breakdown };
+};
+
 // GET /api/v1/financial-years
 router.get('/', async (req, res, next) => {
   try {
@@ -23,10 +48,19 @@ router.get('/', async (req, res, next) => {
       : 'SELECT * FROM financial_year WHERE COALESCE(is_system_generated, false) = false ORDER BY start_date DESC';
     const { rows } = await db.query(query);
     const currentCode = getCalendarFY();
-    const enriched = rows.map(r => ({
-      ...r,
-      is_current: r.code === currentCode
-    }));
+
+    const enriched = await Promise.all(
+      rows.map(async (r) => {
+        const { total, breakdown } = await countFyRecords(r.code);
+        return {
+          ...r,
+          is_current: r.code === currentCode,
+          record_count: total,
+          records_breakdown: breakdown,
+          can_delete: total === 0,
+        };
+      })
+    );
     success(res, enriched);
   } catch (err) { next(err); }
 });
@@ -147,5 +181,28 @@ router.post('/:code/reopen', authorize('Admin'),
     } catch (err) { next(err); }
   }
 );
+
+// DELETE /api/v1/financial-years/:code (Delete empty FY with 0 records)
+router.delete('/:code', authorize('Admin'), async (req, res, next) => {
+  try {
+    const { code } = req.params;
+
+    const { rows: fy } = await db.query('SELECT * FROM financial_year WHERE code = $1', [code]);
+    if (fy.length === 0) return error(res, 'Financial year not found', 404);
+
+    const { total, breakdown } = await countFyRecords(code);
+    if (total > 0) {
+      return error(
+        res,
+        `Cannot delete Financial Year ${code}: it contains ${total} linked record(s). Only financial years with 0 records can be deleted.`,
+        400,
+        breakdown
+      );
+    }
+
+    await db.query('DELETE FROM financial_year WHERE code = $1', [code]);
+    success(res, { message: `Financial Year ${code} deleted successfully` });
+  } catch (err) { next(err); }
+});
 
 module.exports = router;

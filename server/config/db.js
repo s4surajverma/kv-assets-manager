@@ -24,9 +24,22 @@ if (!isDev || (connectionString && (connectionString.includes('neon.tech') || co
   poolConfig.ssl = { rejectUnauthorized: false };
 }
 
+function getDbProviderName(connStr, isDevEnv) {
+  if (!connStr) return isDevEnv ? 'LOCAL (development)' : 'UNKNOWN (production)';
+  if (connStr.includes('supabase.co') || connStr.includes('supabase.com')) return `SUPABASE (${isDevEnv ? 'development' : 'production'})`;
+  if (connStr.includes('neon.tech')) return `NEON (${isDevEnv ? 'development' : 'production'})`;
+  if (connStr.includes('localhost') || connStr.includes('127.0.0.1')) return `LOCAL (${isDevEnv ? 'development' : 'production'})`;
+  try {
+    const url = new URL(connStr);
+    return `${url.hostname} (${isDevEnv ? 'development' : 'production'})`;
+  } catch {
+    return isDevEnv ? 'LOCAL (development)' : 'PRODUCTION';
+  }
+}
+
 const pool = new Pool(poolConfig);
 pool.on('error', (err) => console.error('[DB] Unexpected error on idle client:', err.message));
-console.log(`[DB] Mode: ${isDev ? 'LOCAL (development)' : 'NEON (production)'}`);
+console.log(`[DB] Mode: ${getDbProviderName(connectionString, isDev)}`);
 
 // ============================================================
 // Tables that are GLOBAL (no vidyalaya_id column)

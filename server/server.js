@@ -9,8 +9,16 @@ async function start() {
     const client = await pool.connect();
     const { rows } = await client.query('SELECT NOW() AS time');
     const isDev = (process.env.NODE_ENV || 'development') === 'development';
+    const connStr = isDev
+      ? (process.env.DATABASE_URL_LOCAL || process.env.DATABASE_URL)
+      : (process.env.DATABASE_URL_PROD || process.env.DATABASE_URL);
+    let target = isDev ? 'LOCAL (development)' : 'PRODUCTION';
+    if (connStr) {
+      if (connStr.includes('supabase.co') || connStr.includes('supabase.com')) target = `SUPABASE (${isDev ? 'development' : 'production'})`;
+      else if (connStr.includes('neon.tech')) target = `NEON (${isDev ? 'development' : 'production'})`;
+    }
     console.log(`[DB] Connected at ${rows[0].time}`);
-    console.log(`[DB] Target: ${isDev ? 'LOCAL (development)' : 'NEON (production)'}`);
+    console.log(`[DB] Target: ${target}`);
     client.release();
 
     app.listen(PORT, () => {

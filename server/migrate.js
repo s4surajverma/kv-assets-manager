@@ -61,7 +61,20 @@ async function run() {
   const client = new Client(clientConfig);
   await client.connect();
   console.log(`[MIGRATE] Connected to ${isDev ? 'LOCAL' : 'PRODUCTION'} database`);
-  console.log(`[MIGRATE] Running ${MIGRATIONS.length} migration files...\n`);
+
+  // Ensure migration tracking table exists
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS schema_migrations (
+      id SERIAL PRIMARY KEY,
+      filename VARCHAR(255) NOT NULL UNIQUE,
+      applied_at TIMESTAMPTZ DEFAULT NOW()
+    );
+  `);
+
+  const { rows: appliedRows } = await client.query('SELECT filename FROM schema_migrations');
+  const appliedSet = new Set(appliedRows.map((r) => r.filename));
+
+  console.log(`[MIGRATE] Running ${MIGRATIONS.length} migration files (${appliedSet.size} already recorded)...\n`);
 
   const dbDir = path.join(__dirname, '../db');
   let passed = 0;
@@ -72,6 +85,12 @@ async function run() {
     // Skip seed data on production
     if (!isDev && file.includes('seed')) {
       console.log(`[MIGRATE] SKIP (production): ${file}`);
+      skipped++;
+      continue;
+    }
+
+    if (appliedSet.has(file)) {
+      console.log(`[MIGRATE] ⏭️ SKIP (already applied): ${file}`);
       skipped++;
       continue;
     }
@@ -87,20 +106,23 @@ async function run() {
     const sql = fs.readFileSync(filePath, 'utf-8');
     try {
       await client.query(sql);
+      await client.query('INSERT INTO schema_migrations (filename) VALUES ($1) ON CONFLICT (filename) DO NOTHING', [file]);
       console.log(`[MIGRATE] ✅ OK: ${file}`);
       passed++;
     } catch (err) {
-      console.error(`[MIGRATE] ❌ FAILED: ${file} — ${err.message}`);
       await client.query('ROLLBACK').catch(() => {});
-      // Continue on known idempotent errors (e.g. "already exists")
-      if (!err.message.includes('already exists') && !err.message.includes('duplicate key')) {
+      // Gracefully record if objects were already created in an earlier deployment
+      if (err.message.includes('already exists') || err.message.includes('duplicate key')) {
+        console.log(`[MIGRATE] ℹ️ Recorded existing migration: ${file} (objects already exist)`);
+        await client.query('INSERT INTO schema_migrations (filename) VALUES ($1) ON CONFLICT (filename) DO NOTHING', [file]);
+        passed++;
+      } else {
+        console.error(`[MIGRATE] ❌ FAILED: ${file} — ${err.message}`);
         failed++;
-        console.error(`[MIGRATE] Aborting due to non-idempotent failure.`);
+        console.error(`[MIGRATE] Aborting due to migration failure.`);
         await client.end();
         process.exit(1);
       }
-      console.log(`[MIGRATE] Continuing (object already exists)...`);
-      passed++;
     }
   }
 

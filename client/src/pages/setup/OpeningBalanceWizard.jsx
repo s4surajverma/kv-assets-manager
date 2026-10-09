@@ -70,7 +70,7 @@ export default function OpeningBalanceWizard() {
           getFinancialYears({ include_all: true }),
         ]);
 
-        const fyList = fyRes.data?.data || [];
+        const fyList = Array.isArray(fyRes?.data) ? fyRes.data : (Array.isArray(fyRes) ? fyRes : (fyRes?.data?.data || []));
         const fyObjects = fyList.length > 0 ? fyList : [{ code: '2025-26', is_current: true }, { code: '2024-25' }];
         setAvailableFYs(fyObjects);
 
@@ -328,7 +328,7 @@ export default function OpeningBalanceWizard() {
       const res = await api.get('/assets/schedule4/data', {
         params: { fund_id: 'all', fy: selectedFY },
       });
-      setScheduleData(res.data?.data?.rows || res.data?.data || []);
+      setScheduleData(res.data?.rows || res.data?.data?.rows || (Array.isArray(res.data) ? res.data : []));
     } catch (err) {
       console.error('Failed to load Schedule 4:', err);
       toast.error('Could not load Schedule 4 preview');

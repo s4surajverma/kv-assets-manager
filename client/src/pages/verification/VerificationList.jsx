@@ -17,7 +17,7 @@ export default function VerificationList() {
   useEffect(() => {
     getFinancialYears({ include_all: true })
       .then((r) => {
-        const list = r.data?.data || [];
+        const list = Array.isArray(r?.data) ? r.data : (Array.isArray(r) ? r : (r?.data?.data || []));
         setAvailableFys(list);
       })
       .catch((err) => console.error('Failed to load FYs in VerificationList:', err));

@@ -30,7 +30,7 @@ export default function FYSelect({
       try {
         setLoading(true);
         const res = await getFinancialYears({ include_all: includeAll });
-        const list = res.data?.data || [];
+        const list = Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : (res?.data?.data || []));
         if (mounted) {
           setYears(list);
           if (onFYLoaded) onFYLoaded(list);

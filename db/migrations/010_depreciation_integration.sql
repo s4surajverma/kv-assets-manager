@@ -165,6 +165,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trg_sequential_depreciation ON depreciation_ledger;
 CREATE TRIGGER trg_sequential_depreciation
   BEFORE INSERT ON depreciation_ledger
   FOR EACH ROW EXECUTE FUNCTION enforce_sequential_depreciation();

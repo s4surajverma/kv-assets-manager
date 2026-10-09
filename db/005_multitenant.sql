@@ -123,6 +123,7 @@ CREATE INDEX IF NOT EXISTS idx_audit_vidyalaya ON audit_log(vidyalaya_id);
 -- ==================== 5. UNIQUE CONSTRAINT: employee_code per vidyalaya ====================
 -- First drop the old global unique constraint (from 002_classification_and_empcode.sql)
 ALTER TABLE "user" DROP CONSTRAINT IF EXISTS user_employee_code_unique;
+ALTER TABLE "user" DROP CONSTRAINT IF EXISTS user_vidyalaya_empcode_unique;
 -- Add tenant-scoped uniqueness
 ALTER TABLE "user" ADD CONSTRAINT user_vidyalaya_empcode_unique UNIQUE (vidyalaya_id, employee_code);
 

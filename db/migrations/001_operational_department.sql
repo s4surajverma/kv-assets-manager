@@ -24,8 +24,8 @@ ALTER TABLE "user" ADD COLUMN IF NOT EXISTS operational_department_id INT REFERE
 
 -- 4. Add operational_department_id to verification table
 ALTER TABLE verification ADD COLUMN IF NOT EXISTS operational_department_id INT REFERENCES operational_department(id);
-ALTER TABLE verification ALTER COLUMN department_id DROP NOT NULL;
 ALTER TABLE verification DROP CONSTRAINT IF EXISTS verification_financial_year_department_id_key;
+ALTER TABLE verification DROP CONSTRAINT IF EXISTS verification_financial_year_op_dept_id_key;
 ALTER TABLE verification ADD CONSTRAINT verification_financial_year_op_dept_id_key UNIQUE(financial_year, operational_department_id);
 
 COMMIT;

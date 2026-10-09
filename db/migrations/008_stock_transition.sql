@@ -139,6 +139,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trg_master_lifecycle_guard ON stock_transition_master;
 CREATE TRIGGER trg_master_lifecycle_guard
   BEFORE UPDATE ON stock_transition_master
   FOR EACH ROW EXECUTE FUNCTION master_lifecycle_guard();
@@ -157,6 +158,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trg_protect_items_update ON stock_transition_items;
 CREATE TRIGGER trg_protect_items_update
   BEFORE UPDATE ON stock_transition_items
   FOR EACH ROW EXECUTE FUNCTION protect_finalized_items();
@@ -169,10 +171,12 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS trg_prevent_master_delete ON stock_transition_master;
 CREATE TRIGGER trg_prevent_master_delete
   BEFORE DELETE ON stock_transition_master
   FOR EACH ROW EXECUTE FUNCTION prevent_transition_deletion();
 
+DROP TRIGGER IF EXISTS trg_prevent_items_delete ON stock_transition_items;
 CREATE TRIGGER trg_prevent_items_delete
   BEFORE DELETE ON stock_transition_items
   FOR EACH ROW EXECUTE FUNCTION prevent_transition_deletion();

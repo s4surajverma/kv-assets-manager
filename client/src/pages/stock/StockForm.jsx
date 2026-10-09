@@ -59,7 +59,7 @@ export default function StockForm() {
   useEffect(() => {
     getDepartments().then((r) => setDepts(r.data));
     getFinancialYears().then((r) => {
-      const list = r.data?.data || [];
+      const list = Array.isArray(r?.data) ? r.data : (Array.isArray(r) ? r : (r?.data?.data || []));
       setFinancialYears(list);
       const curr = list.find((y) => y.is_current)?.code || (list[0]?.code || current());
       setValue('financial_year', curr);

@@ -45,10 +45,10 @@ export default function FinancialYearManager() {
     try {
       setLoading(true);
       const res = await getFinancialYears({ include_all: includeAll });
-      setYears(res.data?.data || []);
+      const list = Array.isArray(res?.data) ? res.data : (Array.isArray(res) ? res : (res?.data?.data || []));
+      setYears(list);
     } catch (err) {
       console.error('Failed to load FYs:', err);
-      toast.error('Failed to load financial years');
     } finally {
       setLoading(false);
     }
@@ -79,8 +79,8 @@ export default function FinancialYearManager() {
       setNewCode('');
       setNewRemarks('');
       loadYears();
-    } catch (err) {
-      toast.error(err?.response?.data?.error || 'Failed to create financial year');
+    } catch (_err) {
+      // Error toast already displayed by Axios interceptor
     } finally {
       setSubmitting(false);
     }
@@ -111,8 +111,6 @@ export default function FinancialYearManager() {
           </div>,
           { duration: 6000 }
         );
-      } else {
-        toast.error(err?.response?.data?.error || 'Failed to close financial year');
       }
     } finally {
       setSubmitting(false);
@@ -135,8 +133,8 @@ export default function FinancialYearManager() {
       setReopenReason('');
       setReopenAuth('');
       loadYears();
-    } catch (err) {
-      toast.error(err?.response?.data?.error || 'Failed to reopen financial year');
+    } catch (_err) {
+      // Error toast already displayed by Axios interceptor
     } finally {
       setSubmitting(false);
     }

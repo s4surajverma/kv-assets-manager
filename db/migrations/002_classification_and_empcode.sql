@@ -24,6 +24,7 @@ UPDATE "user" SET employee_code = 'EMP' || LPAD(id::TEXT, 3, '0') WHERE employee
 
 -- 7. Enforce NOT NULL and UNIQUE
 ALTER TABLE "user" ALTER COLUMN employee_code SET NOT NULL;
+ALTER TABLE "user" DROP CONSTRAINT IF EXISTS user_employee_code_unique;
 ALTER TABLE "user" ADD CONSTRAINT user_employee_code_unique UNIQUE (employee_code);
 
 -- 8. Index for classification status lookups
